@@ -3,45 +3,308 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>nexuslab.in</title>
+<title>nexus-lab-org</title>
+<meta name="description" content="Small tools from nexus-lab-org, kept in one place." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  :root { color-scheme: light dark; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem; line-height: 1.5; color: #111; }
-  h1 { font-size: 1.75rem; margin: 0 0 0.25rem; }
-  .subtitle { color: #666; margin-top: 0; margin-bottom: 2.5rem; }
-  .subtitle a { color: inherit; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
-  .card { display: block; border: 1px solid #ddd; border-radius: 10px; padding: 1.1rem 1.25rem; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
-  .card:hover { border-color: #888; transform: translateY(-1px); }
-  .card h2 { font-size: 1.05rem; margin: 0 0 0.35rem; }
-  .card p { font-size: 0.9rem; color: #666; margin: 0; }
-  footer { margin-top: 3rem; font-size: 0.8rem; color: #999; }
-  footer a { color: inherit; }
+  :root {
+    color-scheme: light dark;
+    --paper: #eef1e8;
+    --paper-grid: #cfd8c2;
+    --ink: #1e2a1c;
+    --ink-dim: #5c6b56;
+    --trace: #2f6e4f;
+    --trace-dim: #9fb09a;
+    --pen: #a83c2c;
+    --card-bg: #f6f7f1;
+    --radius: 3px;
+  }
   @media (prefers-color-scheme: dark) {
-    body { color: #eee; }
-    .card { border-color: #333; }
-    .card:hover { border-color: #777; }
-    .subtitle, .card p { color: #999; }
-    footer { color: #666; }
+    :root {
+      --paper: #0b1526;
+      --paper-grid: #16263f;
+      --ink: #dbe6ef;
+      --ink-dim: #7c93ac;
+      --trace: #63e0b3;
+      --trace-dim: #2b5b52;
+      --pen: #ff9466;
+      --card-bg: #0f1c33;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background:
+      linear-gradient(var(--paper-grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      var(--paper);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 3rem;
+  }
+
+  .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--pen);
+    margin: 0 0 0.6rem;
+  }
+
+  h1 {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+    letter-spacing: -0.01em;
+    margin: 0 0 0.6rem;
+  }
+  h1 .dim { color: var(--ink-dim); font-weight: 400; }
+
+  .subtitle {
+    color: var(--ink-dim);
+    margin: 0 0 3.5rem;
+    max-width: 46ch;
+  }
+  .subtitle a { text-decoration-color: var(--trace-dim); }
+  .subtitle a:hover { text-decoration-color: var(--trace); }
+
+  .schematic {
+    position: relative;
+    padding-top: 2.75rem;
+  }
+
+  .traces {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .traces path {
+    fill: none;
+    stroke: var(--trace-dim);
+    stroke-width: 1.5;
+    transition: stroke .2s ease, stroke-width .2s ease;
+  }
+  .traces path.active {
+    stroke: var(--trace);
+    stroke-width: 2;
+  }
+  .traces circle {
+    fill: var(--paper);
+    stroke: var(--trace-dim);
+    stroke-width: 1.5;
+    transition: stroke .2s ease;
+  }
+  .traces circle.active { stroke: var(--trace); }
+
+  .hub {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    margin: 0 auto 3rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    color: var(--trace);
+    background: var(--paper);
+    border: 1.5px solid var(--trace);
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+  }
+
+  .cards {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1.5rem 1.25rem;
+  }
+
+  .card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--ink-dim);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.15rem 1.25rem;
+    text-decoration: none;
+    position: relative;
+  }
+  .card::before,
+  .card::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--ink-dim);
+    top: -4px;
+  }
+  .card::before { left: -4px; border-right: none; border-bottom: none; }
+  .card::after { right: -4px; border-left: none; border-bottom: none; }
+
+  .card:hover,
+  .card:focus-visible {
+    border-color: var(--trace);
+  }
+  .card:hover::before, .card:hover::after,
+  .card:focus-visible::before, .card:focus-visible::after {
+    border-color: var(--trace);
+  }
+  .card:focus-visible {
+    outline: 2px solid var(--trace);
+    outline-offset: 2px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+    border: 1px solid var(--ink-dim);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 500;
+    margin: 0 0 0.4rem;
+  }
+  .card p {
+    font-size: 0.88rem;
+    color: var(--ink-dim);
+    margin: 0;
+  }
+
+  footer {
+    max-width: 780px;
+    margin: 4.5rem auto 0;
+    padding: 1.25rem 1.5rem 0;
+    border-top: 1px dashed var(--paper-grid);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--ink-dim);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  footer a { color: var(--ink-dim); }
+  footer a:hover { color: var(--trace); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .traces path { stroke-dasharray: 3 4; animation: flow 2.4s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -14; } }
   }
 </style>
 </head>
 <body>
-  <h1>nexuslab.in</h1>
-  <p class="subtitle">Projects from <a href="https://github.com/nexus-lab-org">nexus-lab-org</a></p>
-  <div class="grid">
-    <a class="card" href="https://nexuslab.in/finance-calculator/">
-      <h2>finance-calculator</h2>
-    </a>
-    <a class="card" href="https://nexuslab.in/canopy/">
-      <h2>canopy</h2>
-      <p>Git worktree wrapper</p>
-    </a>
-    <a class="card" href="https://nexuslab.in/port-sniffer/">
-      <h2>port-sniffer</h2>
-      <p>A CLI tool to find open port for a hostname</p>
-    </a>
-  </div>
-  <footer><a href="https://github.com/nexus-lab-org">GitHub org</a></footer>
+  <main>
+    <p class="eyebrow">Org index</p>
+    <h1>nexus<span class="dim">-lab-org</span></h1>
+    <p class="subtitle">Small tools, kept in one place. <a href="https://github.com/nexus-lab-org">Source on GitHub.</a></p>
+
+    <div class="schematic" id="schematic">
+      <svg class="traces" id="traces" aria-hidden="true"></svg>
+      <div class="hub" id="hub">NEXUS</div>
+      <div class="cards" id="cards">
+        <a class="card" data-node href="https://nexuslab.in/finance-calculator/">
+          <span class="tag">web</span>
+          <h2>finance-calculator</h2>
+          <p>Loan and investment math, worked out in the browser.</p>
+        </a>
+        <a class="card" data-node href="https://nexuslab.in/canopy/">
+          <span class="tag">cli</span>
+          <h2>canopy</h2>
+          <p>Manage multiple git worktrees from one command.</p>
+        </a>
+        <a class="card" data-node href="https://nexuslab.in/port-sniffer/">
+          <span class="tag">cli</span>
+          <h2>port-sniffer</h2>
+          <p>Scans a host and reports which ports answer.</p>
+        </a>
+      </div>
+    </div>
+
+    <footer>
+      <span>nexus-lab-org.github.io</span>
+      <a href="https://github.com/nexus-lab-org">github.com/nexus-lab-org</a>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var schematic = document.getElementById('schematic');
+      var svg = document.getElementById('traces');
+      var hub = document.getElementById('hub');
+      var cards = Array.prototype.slice.call(document.querySelectorAll('[data-node]'));
+      var ns = 'http://www.w3.org/2000/svg';
+
+      function draw() {
+        var sRect = schematic.getBoundingClientRect();
+        svg.innerHTML = '';
+        var hRect = hub.getBoundingClientRect();
+        var hx = hRect.left + hRect.width / 2 - sRect.left;
+        var hy = hRect.bottom - sRect.top;
+
+        cards.forEach(function (card, i) {
+          var cRect = card.getBoundingClientRect();
+          var cx = cRect.left + cRect.width / 2 - sRect.left;
+          var cy = cRect.top - sRect.top;
+          var midY = hy + (cy - hy) * 0.55;
+
+          var path = document.createElementNS(ns, 'path');
+          path.setAttribute('d', 'M ' + hx + ' ' + hy + ' C ' + hx + ' ' + midY + ', ' + cx + ' ' + midY + ', ' + cx + ' ' + cy);
+          path.setAttribute('data-index', i);
+          svg.appendChild(path);
+
+          var dot = document.createElementNS(ns, 'circle');
+          dot.setAttribute('cx', cx);
+          dot.setAttribute('cy', cy);
+          dot.setAttribute('r', 3);
+          dot.setAttribute('data-index', i);
+          svg.appendChild(dot);
+
+          card.addEventListener('mouseenter', function () { setActive(i, true); });
+          card.addEventListener('mouseleave', function () { setActive(i, false); });
+          card.addEventListener('focus', function () { setActive(i, true); });
+          card.addEventListener('blur', function () { setActive(i, false); });
+        });
+      }
+
+      function setActive(i, on) {
+        svg.querySelectorAll('[data-index="' + i + '"]').forEach(function (el) {
+          el.classList.toggle('active', on);
+        });
+      }
+
+      draw();
+      window.addEventListener('resize', draw);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(draw);
+      }
+    })();
+  </script>
 </body>
 </html>
